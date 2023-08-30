@@ -4,6 +4,8 @@
 
 using Eigen::MatrixXd;
 
+constexpr int mass = 1;
+
 void hello_eigen() {
     MatrixXd m(2, 2);
     m(0, 0) = 3;
@@ -12,7 +14,7 @@ void hello_eigen() {
     m(1, 1) = m(1, 0) + m(0, 1);
 
     // C++11 style loop over elements of an Eigen matrix
-    for (auto&& value : m.reshaped())
+    for (auto &&value : m.reshaped())
         value += 1.;
 
     // Output matrix values

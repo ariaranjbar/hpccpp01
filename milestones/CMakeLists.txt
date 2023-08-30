@@ -1,7 +1,12 @@
 add_subdirectory(01)
 
+# Non-required milestones
+add_subdirectory(02)
+add_subdirectory(03)
+add_subdirectory(05)
+
 # Future milestones
-# add_subdirectory(04)
+add_subdirectory(04)
 # add_subdirectory(07)
 # add_subdirectory(08)
 # add_subdirectory(09)

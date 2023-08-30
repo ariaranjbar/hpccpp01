@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Debug",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/milestones/05/05", // Path to your built executable
+            "args": ["--output","ms5_aaa005", "--temp","300", "--time_step","0.001", "--tau","20", "--mode","1", "--lattice_size","4", "--lattice_spacing","1", "--sim_time","200", "--frame_time","0.1"], // Command-line arguments if any
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "build", // Name of the build task defined in tasks.json
+            "miDebuggerPath": "/usr/bin/gdb" // Path to GDB on your system
+        }
+    ]
+}
