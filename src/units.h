@@ -6,6 +6,8 @@ constexpr double DEFAULT_MASS = 1.0;
 
 // length:  1.0 = 1mm   = 1.0e-9 m
 constexpr double DEFAULT_SIGMA = 1.0;
+constexpr double DEFAULT_LATTICE_SPACING = 1.0;
+constexpr double DEFAULT_CUTOFF = 3.0 * DEFAULT_LATTICE_SPACING;
 
 // temp:    1.0 = 1K    = 2.7315e2 c
 constexpr double DEFAULT_TEMP = 300.0;

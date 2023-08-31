@@ -1,6 +1,8 @@
 
 #include "atoms.h"
-#include "lj_direct_summation.h"
+#include "lj_neighbors.h"
+#include "neighbors.h"
+#include "thermostat.h"
 #include "units.h"
 #include "verlet.h"
 #include "xyz.h"
@@ -15,7 +17,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int ms = 4, size = 9;
+    int ms = 6, size = 9;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -30,14 +32,17 @@ int main(int argc, char *argv[]) {
     // 0 = file, 1 = lattice
     int mode = 0;
 
+    // --cutoff 3.0
+    double cutoff = DEFAULT_CUTOFF;
+
     // --atoms_in "lj54"
     std::string atomsInputFileName = "lj54";
 
     // --lattice_size 5
-    int latticeSize = 3;
+    unsigned int latticeSize = 3;
 
     // --lattice_spacing 2.0
-    double latticeSpacing = 2;
+    double latticeSpacing = DEFAULT_LATTICE_SPACING;
 
     // --output "output"
     std::string outFileName = "output";
@@ -50,6 +55,12 @@ int main(int argc, char *argv[]) {
 
     // --frame_time 0.141421
     double frameTime = DEFAULT_FRAME_TIME;
+
+    // --temp 300
+    double temp = DEFAULT_TEMP;
+
+    // --tau 14.1421
+    double relaxation = DEFAULT_TAU;
     /************************************/
 
     // Parse command-line arguments
@@ -60,9 +71,12 @@ int main(int argc, char *argv[]) {
             i < argc) {
             std::cout << "Options:" << std::endl;
             std::cout << "\t--help, -h: Display this message" << std::endl;
-            std::cout << "\t--mode: set program mode. 0 = read from file, 1 = "
+            std::cout << "\t--mode: Set program mode. 0 = read from file, 1 = "
                          "create cubic lattice. Defaut: 0"
                       << std::endl;
+            std::cout
+                << "\t--cutoff: Cutoff radius for neighbor search. Default: 1.6"
+                << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
                          "extension. Default: lj54 "
                       << std::endl;
@@ -87,6 +101,14 @@ int main(int argc, char *argv[]) {
                          "consecutive frames. "
                          "Default: 0.141421"
                       << std::endl;
+            std::cout << "\t--temp: Value of the thermostat's themprature in "
+                         "Kelvin. "
+                         "Default: 300.0"
+                      << std::endl;
+            std::cout
+                << "\t--tau: Value of the relaxation time of the simulation. "
+                   "Default: 14.1421"
+                << std::endl;
             return 1;
         }
     }
@@ -99,6 +121,11 @@ int main(int argc, char *argv[]) {
         if (std::string(argv[i]) == "--mode" && i + 1 < argc) {
             mode = std::atoi(argv[i + 1]);
             header += "mode:" + std::to_string(mode);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--cutoff" && i + 1 < argc) {
+            cutoff = std::atof(argv[i + 1]);
+            header += "cutoff_radius:" + std::to_string(cutoff);
             header += " ";
             reading_value = true;
         } else if (std::string(argv[i]) == "--atoms_in" && i + 1 < argc) {
@@ -137,6 +164,16 @@ int main(int argc, char *argv[]) {
             header += "frame_time:" + std::to_string(frameTime);
             header += " ";
             reading_value = true;
+        } else if (std::string(argv[i]) == "--temp" && i + 1 < argc) {
+            temp = std::atof(argv[i + 1]);
+            header += "thermostat_temperature:" + std::to_string(temp);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--tau" && i + 1 < argc) {
+            relaxation = std::atof(argv[i + 1]);
+            header += "relaxation_time:" + std::to_string(relaxation);
+            header += " ";
+            reading_value = true;
         } else {
             std::cout << "Invalid option \"" << argv[i] << "\". Exiting."
                       << std::endl;
@@ -146,7 +183,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Hello I am milestone " << ms << " of " << size << "\n";
 
-    if (ms == 4) {
+    if (ms == 6) {
 
         Atoms atoms;
 
@@ -154,7 +191,7 @@ int main(int argc, char *argv[]) {
         case 0: {
             auto [names, positions, velocities]{
                 read_xyz_with_velocities(atomsInputFileName + ".xyz")};
-            atoms = Atoms(positions, velocities);
+            atoms = Atoms(names, positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
             atoms = Atoms(latticeSize, latticeSpacing);
@@ -165,19 +202,23 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        NeighborList neighbor_list;
+
         std::ofstream traj(outFileName + ".xyz");
         std::ofstream energy_stream(outFileName + ".txt");
         energy_stream << header << std::endl;
         energy_stream << std::setprecision(10) << std::setw(20) << "time"
                       << std::setw(20) << "total_energy" << std::setw(20)
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
-                      << std::endl;
+                      << std::setw(20) << "temprature" << std::endl;
 
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
             verlet_step1(atoms.positions, atoms.velocities, atoms.forces,
                          timeStep);
-            double potentioal_energy = lj_direct_summation(atoms);
+            double potentioal_energy =
+                lj_neighbors(neighbor_list, cutoff, atoms);
             verlet_step2(atoms.velocities, atoms.forces, timeStep);
+            berendsen_thermostat(atoms, temp, timeStep, relaxation);
 
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
                 double kinetic_energy = atoms.kinetic_energy();
@@ -191,7 +232,8 @@ int main(int argc, char *argv[]) {
                     << std::setw(20) << std::fixed
                     << std::min(kinetic_energy, 99999999.0) << std::setw(20)
                     << std::fixed << std::min(potentioal_energy, 99999999.0)
-                    << std::endl;
+                    << std::setw(20) << std::fixed
+                    << std::min(atoms.temprature(), 99999999.0) << std::endl;
             }
         };
         traj.close();

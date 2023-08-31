@@ -89,10 +89,12 @@ read_xyz_with_velocities(const std::string &filename) {
 
         // Now follows a line for each atom
         for (int i = 0; i < nb_atoms; ++i) {
+            std::string name;
             std::getline(file, line);
-            std::istringstream(line) >> names[i] >> positions(0, i) >>
+            std::istringstream(line) >> name >> positions(0, i) >>
                 positions(1, i) >> positions(2, i) >> velocities(0, i) >>
                 velocities(1, i) >> velocities(2, i);
+            names(i) = element_names::ELEMENT_NUMBER.at(name);
         }
 
         // Close file, we're done
@@ -113,7 +115,7 @@ void write_xyz(std::ofstream &file, Atoms &atoms) {
 
     // Element name, position
     for (size_t i = 0; i < atoms.nb_atoms(); ++i) {
-        file << std::setw(2) << "Au"
+        file << std::setw(2) << element_names::ELEMENT_NAME[atoms.names(i)]
              << " " << std::setw(10) << atoms.positions.col(i).transpose()
              << std::setw(10) << atoms.velocities.col(i).transpose()
              << std::endl;

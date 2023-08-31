@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     unsigned int latticeSize = 3;
 
     // --lattice_spacing 2.0
-    double latticeSpacing = 2;
+    double latticeSpacing = DEFAULT_LATTICE_SPACING;
 
     // --output "output"
     std::string outFileName = "output";
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
             reading_value = true;
         } else if (std::string(argv[i]) == "--frame_time" && i + 1 < argc) {
             frameTime = std::atof(argv[i + 1]);
-            header += "frame_time:" + std::to_string(simTime);
+            header += "frame_time:" + std::to_string(frameTime);
             header += " ";
             reading_value = true;
         } else if (std::string(argv[i]) == "--temp" && i + 1 < argc) {
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
         case 0: {
             auto [names, positions, velocities]{
                 read_xyz_with_velocities(atomsInputFileName + ".xyz")};
-            atoms = Atoms(positions, velocities);
+            atoms = Atoms(names, positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
             atoms = Atoms(latticeSize, latticeSpacing);

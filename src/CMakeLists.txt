@@ -9,6 +9,9 @@ set(MY_MD_HEADERS
   xyz.h
   units.h
   thermostat.h
+  element_names.h
+  neighbors.h
+  lj_neighbors.h
 )
 
 # List of implementation files
@@ -19,6 +22,8 @@ set(MY_MD_CPP
   lj_direct_summation.cpp
   xyz.cpp
   thermostat.cpp
+  neighbors.cpp
+  lj_neighbors.cpp
 )
 
 # Create a static library
