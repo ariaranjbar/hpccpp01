@@ -1,3 +1,0 @@
-output:ms6_aab006 timestep:0.001000 sim_time:200.000000 thermostat_temperature:150.000000 relaxation_time:20.000000 mode:1 lattice_size:4 lattice_spacing:1.500000 cutoff_radius:1.000000 
-                time        total_energy      kinetic_energy    potential_energy          temprature
-        0.0000000000        2.1171867215        2.1171867215        0.0000000000        9.9243137495

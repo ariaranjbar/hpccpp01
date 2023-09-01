@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     // --output "output"
     std::string outFileName = "output";
 
-    // --time_step 0.00141421
+    // --timestep 0.00141421
     double timeStep = DEFAULT_TIMESTEP;
 
     // --sim_time 141.421
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
             std::cout << "\t--output: Name of the output files. "
                          "Default: output"
                       << std::endl;
-            std::cout << "\t--time_step: Value of the simulation time step. "
+            std::cout << "\t--timestep: Value of the simulation time step. "
                          "Default: 0.00141421"
                       << std::endl;
             std::cout
@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
             header += "output:" + outFileName;
             header += " ";
             reading_value = true;
-        } else if (std::string(argv[i]) == "--time_step" && i + 1 < argc) {
+        } else if (std::string(argv[i]) == "--timestep" && i + 1 < argc) {
             timeStep = std::atof(argv[i + 1]);
             header += "timestep:" + std::to_string(timeStep);
             header += " ";

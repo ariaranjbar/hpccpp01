@@ -1,6 +1,7 @@
 
 #include "atoms.h"
-#include "lj_direct_summation.h"
+#include "ducastelle.h"
+#include "neighbors.h"
 #include "thermostat.h"
 #include "units.h"
 #include "verlet.h"
@@ -16,7 +17,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int ms = 5, size = 9;
+    int ms = 7, size = 9;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -31,8 +32,11 @@ int main(int argc, char *argv[]) {
     // 0 = file, 1 = lattice
     int mode = 0;
 
+    // --cutoff 3.0
+    double cutoff = DEFAULT_CUTOFF;
+
     // --atoms_in "lj54"
-    std::string atomsInputFileName = "lj54";
+    std::string atomsInputFileName = "cluster_923";
 
     // --lattice_size 5
     unsigned int latticeSize = 3;
@@ -67,9 +71,12 @@ int main(int argc, char *argv[]) {
             i < argc) {
             std::cout << "Options:" << std::endl;
             std::cout << "\t--help, -h: Display this message" << std::endl;
-            std::cout << "\t--mode: set program mode. 0 = read from file, 1 = "
+            std::cout << "\t--mode: Set program mode. 0 = read from file, 1 = "
                          "create cubic lattice. Defaut: 0"
                       << std::endl;
+            std::cout
+                << "\t--cutoff: Cutoff radius for neighbor search. Default: 1.6"
+                << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
                          "extension. Default: lj54 "
                       << std::endl;
@@ -114,6 +121,11 @@ int main(int argc, char *argv[]) {
         if (std::string(argv[i]) == "--mode" && i + 1 < argc) {
             mode = std::atoi(argv[i + 1]);
             header += "mode:" + std::to_string(mode);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--cutoff" && i + 1 < argc) {
+            cutoff = std::atof(argv[i + 1]);
+            header += "cutoff_radius:" + std::to_string(cutoff);
             header += " ";
             reading_value = true;
         } else if (std::string(argv[i]) == "--atoms_in" && i + 1 < argc) {
@@ -171,15 +183,17 @@ int main(int argc, char *argv[]) {
 
     std::cout << "Hello I am milestone " << ms << " of " << size << "\n";
 
-    if (ms == 5) {
+    if (ms == 7) {
 
+        double avg_temprature = 0;
+        double avg_total_energy = 0;
         Atoms atoms;
 
         switch (mode) { // XYZ file structure
         case 0: {
             auto [names, positions, velocities]{
                 read_xyz_with_velocities(atomsInputFileName + ".xyz")};
-            atoms = Atoms(names, positions, velocities);
+            atoms = Atoms(names, positions);
         } break;
         case 1: { // Cubic lattice structure
             atoms = Atoms(latticeSize, latticeSpacing);
@@ -190,6 +204,8 @@ int main(int argc, char *argv[]) {
             return 1;
         }
 
+        NeighborList neighbor_list;
+
         std::ofstream traj(outFileName + ".xyz");
         std::ofstream energy_stream(outFileName + ".txt");
         energy_stream << header << std::endl;
@@ -199,11 +215,12 @@ int main(int argc, char *argv[]) {
                       << std::setw(20) << "temprature" << std::endl;
 
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
-            verlet_step1(atoms.positions, atoms.velocities, atoms.forces,
-                         timeStep);
-            double potentioal_energy = lj_direct_summation(atoms);
+            verlet_step1(atoms, timeStep);
+            double potentioal_energy = ducastelle(atoms, neighbor_list, cutoff);
             verlet_step2(atoms.velocities, atoms.forces, timeStep);
             berendsen_thermostat(atoms, temp, timeStep, relaxation);
+            avg_temprature += atoms.temprature();
+            avg_total_energy += potentioal_energy + atoms.kinetic_energy();
 
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
                 double kinetic_energy = atoms.kinetic_energy();
@@ -213,12 +230,17 @@ int main(int argc, char *argv[]) {
                     << std::setw(20) << std::fixed
                     << std::min(timeStep * i, 99999999.0) << std::setw(20)
                     << std::fixed
-                    << std::min(kinetic_energy + potentioal_energy, 99999999.0)
+                    << std::min(avg_total_energy / (frameTime / timeStep),
+                                99999999.0)
                     << std::setw(20) << std::fixed
                     << std::min(kinetic_energy, 99999999.0) << std::setw(20)
                     << std::fixed << std::min(potentioal_energy, 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(atoms.temprature(), 99999999.0) << std::endl;
+                    << std::min(avg_total_energy / (frameTime / timeStep),
+                                99999999.0)
+                    << std::endl;
+                avg_total_energy = 0;
+                avg_temprature = 0;
             }
         };
         traj.close();

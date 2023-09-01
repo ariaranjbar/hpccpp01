@@ -1,0 +1,2 @@
+output:ms7_aaa001 atoms_input:/home/artofaria/desktop/hpc_cpp/ms01/build/cluster_923 timestep:0.001000 sim_time:200.000000 cutoff_radius:10.000000 
+                time        total_energy      kinetic_energy    potential_energy          temprature

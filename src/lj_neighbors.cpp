@@ -1,6 +1,6 @@
 #include "lj_neighbors.h"
 
-double lj_neighbors(NeighborList &neighbor_list, double cutoff, Atoms &atoms,
+double lj_neighbors(Atoms &atoms, NeighborList &neighbor_list, double cutoff,
                     double epsilon, double sigma) {
     double e = 0.0;
     atoms.forces.setZero();
@@ -19,7 +19,7 @@ double lj_neighbors(NeighborList &neighbor_list, double cutoff, Atoms &atoms,
         double s_o_d_12 = s_o_d_6 * s_o_d_6;
         auto dir = (atoms.positions.col(j) - atoms.positions.col(i)) / dist;
         atoms.forces.col(i) -=
-            4 * epsilon * (12 * s_o_d_12 / dist - 6 * s_o_d_6 / dist) * dir;
+            48 * epsilon * (s_o_d_12 / dist - 0.5 * s_o_d_6 / dist) * dir;
 
         e += 2 * epsilon * (s_o_d_12 - s_o_d_6) + cutoff_energy_shift;
     }

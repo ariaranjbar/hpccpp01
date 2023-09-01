@@ -12,6 +12,7 @@ set(MY_MD_HEADERS
   element_names.h
   neighbors.h
   lj_neighbors.h
+  ducastelle.h
 )
 
 # List of implementation files
@@ -24,6 +25,7 @@ set(MY_MD_CPP
   thermostat.cpp
   neighbors.cpp
   lj_neighbors.cpp
+  ducastelle.cpp
 )
 
 # Create a static library

@@ -5,7 +5,7 @@
 #include "neighbors.h"
 #include "units.h"
 
-double lj_neighbors(NeighborList &neighbor_list, double cutoff, Atoms &atoms,
+double lj_neighbors(Atoms &atoms, NeighborList &neighbor_list, double cutoff,
                     double epsilon = DEFAULT_EPSILON,
                     double sigma = DEFAULT_SIGMA);
 

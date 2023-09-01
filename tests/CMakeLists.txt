@@ -25,6 +25,7 @@ set(MY_TESTS_CPP
   test_lj_direct_summation.cpp
   test_thermostats.cpp
   test_neighbors.cpp
+  test_ducastelle.cpp
 )
 
 # Creating the test executable
