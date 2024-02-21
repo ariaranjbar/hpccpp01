@@ -4,7 +4,7 @@
 // mass:    1.0 = 1amu  = 1.66054e-27 kg
 constexpr double DEFAULT_MASS = 1.0;
 
-// length:  1.0 = 1mm   = 1.0e-9 m
+// length:  1.0 = 1nm   = 1.0e-9 m
 constexpr double DEFAULT_SIGMA = 1.0;
 constexpr double DEFAULT_LATTICE_SPACING = 1.0;
 constexpr double DEFAULT_CUTOFF = 3.0 * DEFAULT_LATTICE_SPACING;

@@ -17,7 +17,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int ms = 7, size = 9;
+    int rank = 0, size = 1;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
-    /**********MUST BECOME ARGS**********/
+    /**********Program State**********/
     // --mode 0 | 1
     // 0 = file, 1 = lattice
     int mode = 0;
@@ -63,7 +63,8 @@ int main(int argc, char *argv[]) {
     double relaxation = DEFAULT_TAU;
     /************************************/
 
-    // Parse command-line arguments
+    /**********Parse Command-Line Arguments**********/
+    // A: Construct header
     std::string header = "";
     for (int i = 1; i < argc; ++i) {
         if ((std::string(argv[i]) == "--help" ||
@@ -71,14 +72,15 @@ int main(int argc, char *argv[]) {
             i < argc) {
             std::cout << "Options:" << std::endl;
             std::cout << "\t--help, -h: Display this message" << std::endl;
-            std::cout << "\t--mode: Set program mode. 0 = read from file, 1 = "
+            std::cout << "\t--mode: Set program mode for atomic structure. 0 = "
+                         "read from file, 1 = "
                          "create cubic lattice. Defaut: 0"
                       << std::endl;
             std::cout
                 << "\t--cutoff: Cutoff radius for neighbor search. Default: 1.6"
                 << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
-                         "extension. Default: lj54 "
+                         "extension. Default: cluster_923 "
                       << std::endl;
             std::cout << "\t--lattice_size: Number of atoms in one edge of the "
                          "cubic lattice. Default: 3"
@@ -112,83 +114,84 @@ int main(int argc, char *argv[]) {
             return 1;
         }
     }
-    bool reading_value = false;
+
+    // B: Load program state
     for (int i = 1; i < argc; ++i) {
-        if (reading_value) {
-            reading_value = false;
-            continue;
-        }
         if (std::string(argv[i]) == "--mode" && i + 1 < argc) {
-            mode = std::atoi(argv[i + 1]);
+            i++;
+            mode = std::atoi(argv[i]);
             header += "mode:" + std::to_string(mode);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--cutoff" && i + 1 < argc) {
-            cutoff = std::atof(argv[i + 1]);
+            i++;
+            cutoff = std::atof(argv[i]);
             header += "cutoff_radius:" + std::to_string(cutoff);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--atoms_in" && i + 1 < argc) {
-            atomsInputFileName = std::string(argv[i + 1]);
+            i++;
+            atomsInputFileName = std::string(argv[i]);
             header += "atoms_input:" + atomsInputFileName;
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--lattice_size" && i + 1 < argc) {
-            latticeSize = std::atoi(argv[i + 1]);
+            i++;
+            latticeSize = std::atoi(argv[i]);
             header += "lattice_size:" + std::to_string(latticeSize);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--lattice_spacing" &&
                    i + 1 < argc) {
-            latticeSpacing = std::atof(argv[i + 1]);
+            i++;
+            latticeSpacing = std::atof(argv[i]);
             header += "lattice_spacing:" + std::to_string(latticeSpacing);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--output" && i + 1 < argc) {
-            outFileName = std::string(argv[i + 1]);
+            i++;
+            outFileName = std::string(argv[i]);
             header += "output:" + outFileName;
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--timestep" && i + 1 < argc) {
-            timeStep = std::atof(argv[i + 1]);
+            i++;
+            timeStep = std::atof(argv[i]);
             header += "timestep:" + std::to_string(timeStep);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--sim_time" && i + 1 < argc) {
-            simTime = std::atof(argv[i + 1]);
+            simTime = std::atof(argv[i]);
+            i++;
             header += "sim_time:" + std::to_string(simTime);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--frame_time" && i + 1 < argc) {
-            frameTime = std::atof(argv[i + 1]);
+            i++;
+            frameTime = std::atof(argv[i]);
             header += "frame_time:" + std::to_string(frameTime);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--temp" && i + 1 < argc) {
-            temp = std::atof(argv[i + 1]);
+            i++;
+            temp = std::atof(argv[i]);
             header += "thermostat_temperature:" + std::to_string(temp);
             header += " ";
-            reading_value = true;
         } else if (std::string(argv[i]) == "--tau" && i + 1 < argc) {
-            relaxation = std::atof(argv[i + 1]);
+            i++;
+            relaxation = std::atof(argv[i]);
             header += "relaxation_time:" + std::to_string(relaxation);
             header += " ";
-            reading_value = true;
         } else {
-            std::cout << "Invalid option \"" << argv[i] << "\". Exiting."
-                      << std::endl;
+            std::cout
+                << "Invalid option \"" << argv[i]
+                << "\". Use -h to see a list of available options. Exiting."
+                << std::endl;
             return 1;
         }
     }
+    /************************************************/
 
-    std::cout << "Hello I am milestone " << ms << " of " << size << "\n";
+    std::cout << "Hello I am milestone 7 of 9\n";
 
-    if (ms == 7) {
+    if (rank == 0) {
 
         double avg_temprature = 0;
         double avg_total_energy = 0;
         Atoms atoms;
 
+        // Initiate atomic structure
         switch (mode) { // XYZ file structure
         case 0: {
             auto [names, positions, velocities]{
@@ -198,14 +201,18 @@ int main(int argc, char *argv[]) {
         case 1: { // Cubic lattice structure
             atoms = Atoms(latticeSize, latticeSpacing);
         } break;
-        default:
-            std::cout << "Invalid mode \"" << mode << "\". Exiting."
+        default: { // Invalid state: --mode
+            std::cout << "Invalid mode \"" << mode
+                      << "\". Choose --mode 0 to read the atomic sructure from "
+                         "a file or --mode 1 for a lattice structure. Exiting."
                       << std::endl;
+        }
             return 1;
         }
 
         NeighborList neighbor_list;
 
+        // Initiate outputs
         std::ofstream traj(outFileName + ".xyz");
         std::ofstream energy_stream(outFileName + ".txt");
         energy_stream << header << std::endl;
@@ -214,7 +221,9 @@ int main(int argc, char *argv[]) {
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
                       << std::setw(20) << "temprature" << std::endl;
 
+        // Simulation loop
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
+
             verlet_step1(atoms, timeStep);
             double potentioal_energy = ducastelle(atoms, neighbor_list, cutoff);
             verlet_step2(atoms.velocities, atoms.forces, timeStep);
@@ -222,6 +231,7 @@ int main(int argc, char *argv[]) {
             avg_temprature += atoms.temprature();
             avg_total_energy += potentioal_energy + atoms.kinetic_energy();
 
+            // Write step
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
                 double kinetic_energy = atoms.kinetic_energy();
                 write_xyz(traj, atoms);
