@@ -15,7 +15,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int ms = 4, size = 9;
+    int rank = 0, size = 1;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -144,9 +144,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::cout << "Hello I am milestone " << ms << " of " << size << "\n";
+    std::cout << "Hello I am milestone 4 of 9\n";
 
-    if (ms == 4) {
+    if (rank == 0) {
 
         Atoms atoms;
 
@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
             atoms = Atoms(positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
-            atoms = Atoms(latticeSize, latticeSpacing);
+            atoms = Atoms(latticeSize, latticeSpacing, element_names::Ar);
         } break;
         default:
             std::cout << "Invalid mode \"" << mode << "\". Exiting."

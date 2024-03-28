@@ -7,7 +7,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int rank = 1, size = 1;
+    int rank = 0, size = 1;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    std::cout << "Hello I am rank " << rank << " of " << size << "\n";
+    std::cout << "Hello I am milestone 2 of 9\n";
 
-    if (rank == 1) {
+    if (rank == 0) {
         double px = 0.0;
         double py = 0.0;
         double pz = 0.0;
@@ -33,9 +33,11 @@ int main(int argc, char *argv[]) {
         for (int i = 0; i < 100; i++) {
             verlet_step1(px, py, pz, vx, vy, vz, fx, fy, fz, 1);
             verlet_step2(vx, vy, vz, fx, fy, fz, 1);
-            
-            std::cout << "px:   " << px << "py:   " << py << "py:   " << py << std::endl;
-            std::cout << "vx:   " << vx << "vy:   " << vy << "vy:   " << vy << std::endl;
+
+            std::cout << "px:   " << px << "py:   " << py << "py:   " << py
+                      << std::endl;
+            std::cout << "vx:   " << vx << "vy:   " << vy << "vy:   " << vy
+                      << std::endl;
         };
     }
 

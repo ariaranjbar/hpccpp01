@@ -32,34 +32,34 @@ int main(int argc, char *argv[]) {
     // 0 = file, 1 = lattice
     int mode = 0;
 
-    // --cutoff 3.0
+    // --cutoff 15.0
     double cutoff = DEFAULT_CUTOFF;
 
-    // --atoms_in "lj54"
+    // --atoms_in "cluster_923"
     std::string atomsInputFileName = "cluster_923";
 
     // --lattice_size 5
-    unsigned int latticeSize = 3;
+    unsigned int latticeSize = 5;
 
-    // --lattice_spacing 2.0
+    // --lattice_spacing 1.0
     double latticeSpacing = DEFAULT_LATTICE_SPACING;
 
     // --output "output"
     std::string outFileName = "output";
 
-    // --timestep 0.00141421
+    // --timestep 0.005
     double timeStep = DEFAULT_TIMESTEP;
 
-    // --sim_time 141.421
+    // --sim_time 200.0
     double simTime = DEFAULT_SIM_TIME;
 
-    // --frame_time 0.141421
+    // --frame_time 0.5
     double frameTime = DEFAULT_FRAME_TIME;
 
     // --temp 300
     double temp = DEFAULT_TEMP;
 
-    // --tau 14.1421
+    // --tau 1.0
     double relaxation = DEFAULT_TAU;
     /************************************/
 
@@ -74,43 +74,43 @@ int main(int argc, char *argv[]) {
             std::cout << "\t--help, -h: Display this message" << std::endl;
             std::cout << "\t--mode: Set program mode for atomic structure. 0 = "
                          "read from file, 1 = "
-                         "create cubic lattice. Defaut: 0"
-                      << std::endl;
-            std::cout
-                << "\t--cutoff: Cutoff radius for neighbor search. Default: 1.6"
-                << std::endl;
+                         "create cubic lattice. Defaut: "
+                      << mode << std::endl;
+            std::cout << "\t--cutoff: Cutoff radius for neighbor search. "
+                         "Default: "
+                      << cutoff << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
-                         "extension. Default: cluster_923 "
-                      << std::endl;
+                         "extension. Default: "
+                      << atomsInputFileName << std::endl;
             std::cout << "\t--lattice_size: Number of atoms in one edge of the "
-                         "cubic lattice. Default: 3"
-                      << std::endl;
+                         "cubic lattice. Default: "
+                      << latticeSize << std::endl;
             std::cout
                 << "\t--lattice_spacing: Distance of neighbor atoms in the "
-                   "cubic lattice. Default: 2"
+                   "cubic lattice. Default: 1.0"
                 << std::endl;
             std::cout << "\t--output: Name of the output files. "
-                         "Default: output"
-                      << std::endl;
+                         "Default: "
+                      << outFileName << std::endl;
             std::cout << "\t--timestep: Value of the simulation time step. "
-                         "Default: 0.00141421"
-                      << std::endl;
+                         "Default: "
+                      << timeStep << std::endl;
             std::cout
                 << "\t--sim_time: Value of the time duration of simulation. "
-                   "Default: 141.421"
-                << std::endl;
+                   "Default: "
+                << simTime << std::endl;
             std::cout << "\t--frame_time: Value of the time difference between "
                          "consecutive frames. "
-                         "Default: 0.141421"
-                      << std::endl;
+                         "Default: "
+                      << frameTime << std::endl;
             std::cout << "\t--temp: Value of the thermostat's themprature in "
                          "Kelvin. "
-                         "Default: 300.0"
-                      << std::endl;
+                         "Default: "
+                      << temp << std::endl;
             std::cout
                 << "\t--tau: Value of the relaxation time of the simulation. "
-                   "Default: 14.1421"
-                << std::endl;
+                   "Default: "
+                << relaxation << std::endl;
             return 1;
         }
     }
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
 
     if (rank == 0) {
 
-        double avg_temprature = 0;
+        double avg_temperature = 0;
         double avg_total_energy = 0;
         Atoms atoms;
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
             atoms = Atoms(names, positions);
         } break;
         case 1: { // Cubic lattice structure
-            atoms = Atoms(latticeSize, latticeSpacing);
+            atoms = Atoms(latticeSize, latticeSpacing, element_names::Au);
         } break;
         default: { // Invalid state: --mode
             std::cout << "Invalid mode \"" << mode
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
         energy_stream << std::setprecision(10) << std::setw(20) << "time"
                       << std::setw(20) << "total_energy" << std::setw(20)
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
-                      << std::setw(20) << "temprature" << std::endl;
+                      << std::setw(20) << "temperature" << std::endl;
 
         // Simulation loop
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
@@ -228,7 +228,7 @@ int main(int argc, char *argv[]) {
             double potentioal_energy = ducastelle(atoms, neighbor_list, cutoff);
             verlet_step2(atoms.velocities, atoms.forces, timeStep);
             berendsen_thermostat(atoms, temp, timeStep, relaxation);
-            avg_temprature += atoms.temprature();
+            avg_temperature += atoms.temperature();
             avg_total_energy += potentioal_energy + atoms.kinetic_energy();
 
             // Write step
@@ -246,11 +246,11 @@ int main(int argc, char *argv[]) {
                     << std::min(kinetic_energy, 99999999.0) << std::setw(20)
                     << std::fixed << std::min(potentioal_energy, 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(avg_total_energy / (frameTime / timeStep),
+                    << std::min(avg_temperature / (frameTime / timeStep),
                                 99999999.0)
                     << std::endl;
                 avg_total_energy = 0;
-                avg_temprature = 0;
+                avg_temperature = 0;
             }
         };
         traj.close();

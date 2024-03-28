@@ -96,9 +96,10 @@ class Atoms {
     }
 
     Atoms(const unsigned int lattice_size, const double lattice_spacing,
+          const unsigned char element_name,
           const double initial_velocity_multiplier = 0.25)
         : names{lattice_size * lattice_size * lattice_size} {
-        names = element_names::Au;
+        names = element_name;
         positions = Positions_t(3, names.rows());
         velocities = Velocities_t(3, names.rows());
         velocities.setRandom();
@@ -130,7 +131,7 @@ class Atoms {
             .sum();
     }
 
-    double temprature() {
+    double temperature() {
         return (kinetic_energy() / (1.5 * nb_atoms() * BOLTZMANN_CONSTANT));
     }
 };

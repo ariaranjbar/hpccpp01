@@ -6,7 +6,6 @@
 #include <mpi.h>
 #endif
 
-
 int main(int argc, char *argv[]) {
     int rank = 0, size = 1;
 
@@ -19,10 +18,10 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    std::cout << "Hello I am rank " << rank << " of " << size << "\n";
+    std::cout << "Hello I am milestone 1 of 9\n";
 
     if (rank == 0)
-      hello_eigen();
+        hello_eigen();
 
 #ifdef USE_MPI
     MPI_Finalize();

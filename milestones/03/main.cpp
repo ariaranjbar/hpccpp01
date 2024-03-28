@@ -7,7 +7,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int rank = 2, size = 1;
+    int rank = 0, size = 1;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -18,9 +18,9 @@ int main(int argc, char *argv[]) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-    std::cout << "Hello I am rank " << rank << " of " << size << "\n";
+    std::cout << "Hello I am milestone 3 of 9\n";
 
-    if (rank == 2) {
+    if (rank == 0) {
 
         Positions_t positions(3, 10);
         positions.setZero();

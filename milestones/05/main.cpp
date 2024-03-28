@@ -16,7 +16,7 @@
 #endif
 
 int main(int argc, char *argv[]) {
-    int ms = 5, size = 9;
+    int rank = 0, size = 1;
 
     // Below is some MPI code, try compiling with `cmake -DUSE_MPI=ON ..`
 #ifdef USE_MPI
@@ -35,27 +35,27 @@ int main(int argc, char *argv[]) {
     std::string atomsInputFileName = "lj54";
 
     // --lattice_size 5
-    unsigned int latticeSize = 3;
+    unsigned int latticeSize = 5;
 
-    // --lattice_spacing 2.0
+    // --lattice_spacing 3.0
     double latticeSpacing = DEFAULT_LATTICE_SPACING;
 
     // --output "output"
     std::string outFileName = "output";
 
-    // --timestep 0.00141421
+    // --timestep 0.005
     double timeStep = DEFAULT_TIMESTEP;
 
-    // --sim_time 141.421
+    // --sim_time 200.0
     double simTime = DEFAULT_SIM_TIME;
 
-    // --frame_time 0.141421
+    // --frame_time 0.5
     double frameTime = DEFAULT_FRAME_TIME;
 
     // --temp 300
     double temp = DEFAULT_TEMP;
 
-    // --tau 14.1421
+    // --tau 1.0
     double relaxation = DEFAULT_TAU;
     /************************************/
 
@@ -68,40 +68,40 @@ int main(int argc, char *argv[]) {
             std::cout << "Options:" << std::endl;
             std::cout << "\t--help, -h: Display this message" << std::endl;
             std::cout << "\t--mode: set program mode. 0 = read from file, 1 = "
-                         "create cubic lattice. Defaut: 0"
-                      << std::endl;
+                         "create cubic lattice. Defaut: "
+                      << mode << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
                          "extension. Default: lj54 "
                       << std::endl;
             std::cout << "\t--lattice_size: Number of atoms in one edge of the "
-                         "cubic lattice. Default: 3"
-                      << std::endl;
+                         "cubic lattice. Default: "
+                      << latticeSize << std::endl;
             std::cout
                 << "\t--lattice_spacing: Distance of neighbor atoms in the "
-                   "cubic lattice. Default: 2"
-                << std::endl;
+                   "cubic lattice. Default: "
+                << latticeSpacing << std::endl;
             std::cout << "\t--output: Name of the output files. "
-                         "Default: output"
-                      << std::endl;
+                         "Default: "
+                      << outFileName << std::endl;
             std::cout << "\t--timestep: Value of the simulation time step. "
-                         "Default: 0.00141421"
-                      << std::endl;
+                         "Default: "
+                      << timeStep << std::endl;
             std::cout
                 << "\t--sim_time: Value of the time duration of simulation. "
-                   "Default: 141.421"
-                << std::endl;
+                   "Default: "
+                << simTime << std::endl;
             std::cout << "\t--frame_time: Value of the time difference between "
                          "consecutive frames. "
-                         "Default: 0.141421"
-                      << std::endl;
+                         "Default: "
+                      << frameTime << std::endl;
             std::cout << "\t--temp: Value of the thermostat's themprature in "
                          "Kelvin. "
-                         "Default: 300.0"
-                      << std::endl;
+                         "Default: "
+                      << temp << std::endl;
             std::cout
                 << "\t--tau: Value of the relaxation time of the simulation. "
-                   "Default: 14.1421"
-                << std::endl;
+                   "Default: "
+                << relaxation << std::endl;
             return 1;
         }
     }
@@ -169,9 +169,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    std::cout << "Hello I am milestone " << ms << " of " << size << "\n";
+    std::cout << "Hello I am milestone 5 of 9\n";
 
-    if (ms == 5) {
+    if (rank == 0) {
 
         Atoms atoms;
 
@@ -182,7 +182,7 @@ int main(int argc, char *argv[]) {
             atoms = Atoms(names, positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
-            atoms = Atoms(latticeSize, latticeSpacing);
+            atoms = Atoms(latticeSize, latticeSpacing, element_names::Ar);
         } break;
         default:
             std::cout << "Invalid mode \"" << mode << "\". Exiting."
@@ -196,7 +196,7 @@ int main(int argc, char *argv[]) {
         energy_stream << std::setprecision(10) << std::setw(20) << "time"
                       << std::setw(20) << "total_energy" << std::setw(20)
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
-                      << std::setw(20) << "temprature" << std::endl;
+                      << std::setw(20) << "temperature" << std::endl;
 
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
             verlet_step1(atoms.positions, atoms.velocities, atoms.forces,
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]) {
                     << std::min(kinetic_energy, 99999999.0) << std::setw(20)
                     << std::fixed << std::min(potentioal_energy, 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(atoms.temprature(), 99999999.0) << std::endl;
+                    << std::min(atoms.temperature(), 99999999.0) << std::endl;
             }
         };
         traj.close();

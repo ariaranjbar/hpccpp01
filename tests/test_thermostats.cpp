@@ -6,16 +6,16 @@
 #include "thermostat.h"
 #include "verlet.h"
 
-TEST(ThermostatTest, Temprature) {
+TEST(ThermostatTest, Temperature) {
     constexpr double target_temp = 100;
-    constexpr int lattice_size = 4;
-    constexpr double lattice_spacing = 1;
-    Atoms atoms(lattice_size, lattice_spacing);
+    constexpr int lattice_size = 5;
+    constexpr double lattice_spacing = 3;
+    Atoms atoms(lattice_size, lattice_spacing, element_names::Ar);
     std::cout << std::setprecision(10) << std::setw(20) << "time"
               << std::setw(20) << "current_dist" << std::setw(20) << "last_dist"
               << std::endl;
 
-    // if not within 15 Kelvin of the thermostat temprature, make sure it is
+    // if not within 15 Kelvin of the thermostat temperature, make sure it is
     // steadily approching it.
     double last_average = 0;
 
@@ -29,7 +29,7 @@ TEST(ThermostatTest, Temprature) {
         lj_direct_summation(atoms);
         verlet_step2(atoms.velocities, atoms.forces, DEFAULT_TIMESTEP);
         berendsen_thermostat(atoms, target_temp, DEFAULT_TIMESTEP, DEFAULT_TAU);
-        temp_cache += atoms.temprature();
+        temp_cache += atoms.temperature();
         num_measured++;
         if (i % static_cast<int>(
                     (DEFAULT_FRAME_TIME * 100 / DEFAULT_TIMESTEP)) ==

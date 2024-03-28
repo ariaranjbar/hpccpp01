@@ -21,7 +21,7 @@ double lj_neighbors(Atoms &atoms, NeighborList &neighbor_list, double cutoff,
         atoms.forces.col(i) -=
             48 * epsilon * (s_o_d_12 / dist - 0.5 * s_o_d_6 / dist) * dir;
 
-        e += 2 * epsilon * (s_o_d_12 - s_o_d_6) + cutoff_energy_shift;
+        e += 2 * epsilon * (s_o_d_12 - s_o_d_6) - cutoff_energy_shift;
     }
     return e;
 }
