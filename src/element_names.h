@@ -385,5 +385,7 @@ const double ELEMENT_MASS[]{
     262.0,    263.0,    262.0,     255.0,    256.0,    269.0,    272.0,
     272.0,    272.0,    272.0,     272.0,    272.0,    272.0,    272.0};
 
+const double AuMass = ELEMENT_MASS[Au];
+
 } // namespace element_names
 #endif // __ELEMENT_NAMES_H

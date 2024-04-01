@@ -34,22 +34,34 @@ int main(int argc, char *argv[]) {
     std::string atomsInputFileName = "lj54";
 
     // --lattice_size 5
-    int latticeSize = 3;
+    int latticeSize = 5;
 
-    // --lattice_spacing 2.0
-    double latticeSpacing = 2;
+    // --lattice_spacing 3.0
+    double latticeSpacing = 3.0;
 
     // --output "output"
     std::string outFileName = "output";
 
-    // --timestep 0.00141421
+    // --timestep 0.005
     double timeStep = DEFAULT_TIMESTEP;
 
-    // --sim_time 141.421
+    // --sim_time 200.0
     double simTime = DEFAULT_SIM_TIME;
 
-    // --frame_time 0.141421
+    // --frame_time 0.5
     double frameTime = DEFAULT_FRAME_TIME;
+
+    // --lj_epsilon 0.01035486
+    double ljEpsilon = DEFAULT_EPSILON;
+
+    // --lj_sigma 3.4
+    double ljSigma = DEFAULT_SIGMA;
+
+    // --element "Ar"
+    std::string elementName = "Ar";
+
+    // --init_velocity 0.05
+    double initVelocity = 0.05;
     /************************************/
 
     // Parse command-line arguments
@@ -61,32 +73,47 @@ int main(int argc, char *argv[]) {
             std::cout << "Options:" << std::endl;
             std::cout << "\t--help, -h: Display this message" << std::endl;
             std::cout << "\t--mode: set program mode. 0 = read from file, 1 = "
-                         "create cubic lattice. Defaut: 0"
-                      << std::endl;
+                         "create cubic lattice. Defaut: "
+                      << mode << std::endl;
             std::cout << "\t--atoms_in: Name of the input xyz file without "
-                         "extension. Default: lj54 "
-                      << std::endl;
+                         "extension. Default: "
+                      << atomsInputFileName << std::endl;
             std::cout << "\t--lattice_size: Number of atoms in one edge of the "
-                         "cubic lattice. Default: 3"
-                      << std::endl;
+                         "cubic lattice. Default: "
+                      << latticeSize << std::endl;
             std::cout
                 << "\t--lattice_spacing: Distance of neighbor atoms in the "
-                   "cubic lattice. Default: 2"
-                << std::endl;
+                   "cubic lattice. Default: "
+                << latticeSpacing << std::endl;
             std::cout << "\t--output: Name of the output files. "
-                         "Default: output"
-                      << std::endl;
+                         "Default: "
+                      << outFileName << std::endl;
             std::cout << "\t--timestep: Value of the simulation time step. "
-                         "Default: 0.00141421"
-                      << std::endl;
+                         "Default: "
+                      << timeStep << std::endl;
             std::cout
                 << "\t--sim_time: Value of the time duration of simulation. "
-                   "Default: 141.421"
-                << std::endl;
+                   "Default: "
+                << simTime << std::endl;
             std::cout << "\t--frame_time: Value of the time difference between "
                          "consecutive frames. "
-                         "Default: 0.141421"
-                      << std::endl;
+                         "Default: "
+                      << frameTime << std::endl;
+            std::cout << "\t--lj_epsilon: Value of epsilon in Lennard-Jones "
+                         "potentional. "
+                         "Default: "
+                      << ljEpsilon << std::endl;
+            std::cout << "\t--lj_epsilon: Value of sigma in Lennard-Jones "
+                         "potentional. "
+                         "Default: "
+                      << ljSigma << std::endl;
+            std::cout << "\t--element: Name of the element the lattice is "
+                         "made from. Default: "
+                      << elementName << std::endl;
+            std::cout << "\t--init_velocity: multiplier of initial random "
+                         "velocities of atoms. "
+                         "Default: "
+                      << initVelocity << std::endl;
             return 1;
         }
     }
@@ -137,6 +164,26 @@ int main(int argc, char *argv[]) {
             header += "frame_time:" + std::to_string(frameTime);
             header += " ";
             reading_value = true;
+        } else if (std::string(argv[i]) == "--lj_epsilon" && i + 1 < argc) {
+            ljEpsilon = std::atof(argv[i + 1]);
+            header += "lj_epsilon:" + std::to_string(ljEpsilon);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--lj_sigma" && i + 1 < argc) {
+            ljSigma = std::atof(argv[i + 1]);
+            header += "lj_sigma:" + std::to_string(ljSigma);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--element" && i + 1 < argc) {
+            elementName = std::string(argv[i + 1]);
+            header += "element:" + elementName;
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--init_velocity" && i + 1 < argc) {
+            initVelocity = std::atof(argv[i + 1]);
+            header += "init_velocity:" + std::to_string(initVelocity);
+            header += " ";
+            reading_value = true;
         } else {
             std::cout << "Invalid option \"" << argv[i] << "\". Exiting."
                       << std::endl;
@@ -154,10 +201,12 @@ int main(int argc, char *argv[]) {
         case 0: {
             auto [names, positions, velocities]{
                 read_xyz_with_velocities(atomsInputFileName + ".xyz")};
-            atoms = Atoms(positions, velocities);
+            atoms = Atoms(names, positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
-            atoms = Atoms(latticeSize, latticeSpacing, element_names::Ar);
+            atoms = Atoms(latticeSize, latticeSpacing,
+                          element_names::ELEMENT_NUMBER.at(elementName),
+                          initVelocity);
         } break;
         default:
             std::cout << "Invalid mode \"" << mode << "\". Exiting."
@@ -171,27 +220,44 @@ int main(int argc, char *argv[]) {
         energy_stream << std::setprecision(10) << std::setw(20) << "time"
                       << std::setw(20) << "total_energy" << std::setw(20)
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
-                      << std::endl;
+                      << std::setw(20) << "temperature" << std::endl;
+
+        double avg_temperature = 0;
+        double avg_potential_energy = 0;
+        double avg_kinetic_energy = 0;
 
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
-            verlet_step1(atoms.positions, atoms.velocities, atoms.forces,
-                         timeStep);
-            double potentioal_energy = lj_direct_summation(atoms);
-            verlet_step2(atoms.velocities, atoms.forces, timeStep);
+            verlet_step1(atoms, timeStep);
+            double potentioal_energy =
+                lj_direct_summation(atoms, ljEpsilon, ljSigma);
+            verlet_step2(atoms, timeStep);
+
+            avg_temperature += atoms.temperature();
+            avg_potential_energy += potentioal_energy;
+            avg_kinetic_energy += atoms.kinetic_energy();
 
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
-                double kinetic_energy = atoms.kinetic_energy();
+                const int n = static_cast<int>((frameTime / timeStep));
+                avg_temperature /= n;
+                avg_kinetic_energy /= n;
+                avg_potential_energy /= n;
                 write_xyz(traj, atoms);
 
                 energy_stream
                     << std::setw(20) << std::fixed
                     << std::min(timeStep * i, 99999999.0) << std::setw(20)
                     << std::fixed
-                    << std::min(kinetic_energy + potentioal_energy, 99999999.0)
+                    << std::min(avg_kinetic_energy + avg_potential_energy,
+                                99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(kinetic_energy, 99999999.0) << std::setw(20)
-                    << std::fixed << std::min(potentioal_energy, 99999999.0)
-                    << std::endl;
+                    << std::min(avg_kinetic_energy, 99999999.0) << std::setw(20)
+                    << std::fixed << std::min(avg_potential_energy, 99999999.0)
+                    << std::setw(20) << std::fixed
+                    << std::min(avg_temperature, 99999999.0) << std::endl;
+
+                avg_temperature = 0;
+                avg_kinetic_energy = 0;
+                avg_potential_energy = 0;
             }
         };
         traj.close();

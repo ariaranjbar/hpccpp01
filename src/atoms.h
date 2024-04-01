@@ -4,6 +4,7 @@
 #include "element_names.h"
 #include "types.h"
 #include "units.h"
+#include <iostream>
 
 class Atoms {
   public:
@@ -25,7 +26,10 @@ class Atoms {
         positions.setZero();
         velocities.setZero();
         forces.setZero();
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
         assert(masses.rows() == positions.cols());
     }
 
@@ -38,7 +42,12 @@ class Atoms {
         velocities.setZero();
         forces.setZero();
         names = element_names::Au;
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
+        assert(std::abs(masses.sum() / positions.cols() -
+                        element_names::ELEMENT_MASS[element_names::Au]) < 1e-8);
         assert(masses.rows() == positions.cols());
     }
 
@@ -51,7 +60,10 @@ class Atoms {
         assert(p.cols() == n.rows());
         velocities.setZero();
         forces.setZero();
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
         assert(masses.rows() == positions.cols());
     }
 
@@ -64,7 +76,12 @@ class Atoms {
         assert(p.cols() == v.cols());
         forces.setZero();
         names = element_names::Au;
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
+        assert(std::abs(masses.sum() / positions.cols() -
+                        element_names::ELEMENT_MASS[element_names::Au]) < 1e-8);
         assert(masses.rows() == positions.cols());
     }
 
@@ -77,7 +94,10 @@ class Atoms {
         assert(p.cols() == v.cols());
         assert(p.cols() == n.rows());
         forces.setZero();
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
         assert(masses.rows() == positions.cols());
     }
 
@@ -91,7 +111,12 @@ class Atoms {
         velocities.setZero();
         forces.setZero();
         names = element_names::Au;
-        masses = element_names::ELEMENT_MASS[names(0)];
+        masses = Masses_t(names.rows());
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[element_names::Au];
+        }
+        assert(masses.sum() / positions.cols() ==
+               element_names::ELEMENT_MASS[element_names::Au]);
         assert(masses.rows() == positions.cols());
     }
 
@@ -107,7 +132,11 @@ class Atoms {
         forces = Forces_t(3, names.rows());
         forces.setZero();
         masses = Masses_t(names.rows());
-        masses = element_names::ELEMENT_MASS[names(0)];
+        for (unsigned int i = 0; i < masses.rows(); i++) {
+            masses(i) = element_names::ELEMENT_MASS[names(i)];
+        }
+        assert(std::abs(masses.sum() / positions.cols() -
+                        element_names::ELEMENT_MASS[element_name]) < 1e-8);
         assert(masses.rows() == positions.cols());
 
         int index = 0;
@@ -133,6 +162,25 @@ class Atoms {
 
     double temperature() {
         return (kinetic_energy() / (1.5 * nb_atoms() * BOLTZMANN_CONSTANT));
+    }
+
+    double min_distance() {
+        double minDistance = std::numeric_limits<double>::max();
+
+        // Compute the pairwise distances between all particles
+        for (int i = 0; i < positions.cols() - 1; ++i) {
+            for (int j = i + 1; j < positions.cols(); ++j) {
+                // Calculate the Euclidean distance between particles i and j
+                double distance =
+                    (positions.col(i) - positions.col(j)).matrix().norm();
+                // Update minDistance if the current distance is smaller
+                if (distance < minDistance) {
+                    minDistance = distance;
+                }
+            }
+        }
+
+        return minDistance;
     }
 };
 

@@ -61,6 +61,18 @@ int main(int argc, char *argv[]) {
 
     // --tau 1.0
     double relaxation = DEFAULT_TAU;
+
+    // --lj_epsilon 0.01035486
+    double ljEpsilon = DEFAULT_EPSILON;
+
+    // --lj_sigma 3.4
+    double ljSigma = DEFAULT_SIGMA;
+
+    // --element "Ar"
+    std::string elementName = "Ar";
+
+    // --init_velocity 0.05
+    double initVelocity = 0.05;
     /************************************/
 
     // Parse command-line arguments
@@ -109,6 +121,21 @@ int main(int argc, char *argv[]) {
                 << "\t--tau: Value of the relaxation time of the simulation. "
                    "Default: "
                 << relaxation << std::endl;
+            std::cout << "\t--lj_epsilon: Value of epsilon in Lennard-Jones "
+                         "potentional. "
+                         "Default: "
+                      << ljEpsilon << std::endl;
+            std::cout << "\t--lj_epsilon: Value of sigma in Lennard-Jones "
+                         "potentional. "
+                         "Default: "
+                      << ljSigma << std::endl;
+            std::cout << "\t--element: Name of the element the lattice is "
+                         "made from. Default: "
+                      << elementName << std::endl;
+            std::cout << "\t--init_velocity: multiplier of initial random "
+                         "velocities of atoms. "
+                         "Default: "
+                      << initVelocity << std::endl;
             return 1;
         }
     }
@@ -174,6 +201,26 @@ int main(int argc, char *argv[]) {
             header += "relaxation_time:" + std::to_string(relaxation);
             header += " ";
             reading_value = true;
+        } else if (std::string(argv[i]) == "--lj_epsilon" && i + 1 < argc) {
+            ljEpsilon = std::atof(argv[i + 1]);
+            header += "lj_epsilon:" + std::to_string(ljEpsilon);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--lj_sigma" && i + 1 < argc) {
+            ljSigma = std::atof(argv[i + 1]);
+            header += "lj_sigma:" + std::to_string(ljSigma);
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--element" && i + 1 < argc) {
+            elementName = std::string(argv[i + 1]);
+            header += "element:" + elementName;
+            header += " ";
+            reading_value = true;
+        } else if (std::string(argv[i]) == "--init_velocity" && i + 1 < argc) {
+            initVelocity = std::atof(argv[i + 1]);
+            header += "init_velocity:" + std::to_string(initVelocity);
+            header += " ";
+            reading_value = true;
         } else {
             std::cout << "Invalid option \"" << argv[i] << "\". Exiting."
                       << std::endl;
@@ -194,7 +241,9 @@ int main(int argc, char *argv[]) {
             atoms = Atoms(names, positions, velocities);
         } break;
         case 1: { // Cubic lattice structure
-            atoms = Atoms(latticeSize, latticeSpacing, element_names::Ar);
+            atoms = Atoms(latticeSize, latticeSpacing,
+                          element_names::ELEMENT_NUMBER.at(elementName),
+                          initVelocity);
         } break;
         default:
             std::cout << "Invalid mode \"" << mode << "\". Exiting."
@@ -212,28 +261,43 @@ int main(int argc, char *argv[]) {
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
                       << std::setw(20) << "temperature" << std::endl;
 
+        double avg_temperature = 0;
+        double avg_potential_energy = 0;
+        double avg_kinetic_energy = 0;
+
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
-            verlet_step1(atoms.positions, atoms.velocities, atoms.forces,
-                         timeStep);
+            verlet_step1(atoms, timeStep);
             double potentioal_energy =
-                lj_neighbors(atoms, neighbor_list, cutoff);
-            verlet_step2(atoms.velocities, atoms.forces, timeStep);
+                lj_neighbors(atoms, neighbor_list, cutoff, ljEpsilon, ljSigma);
+            verlet_step2(atoms, timeStep);
             berendsen_thermostat(atoms, temp, timeStep, relaxation);
 
+            avg_temperature += atoms.temperature();
+            avg_potential_energy += potentioal_energy;
+            avg_kinetic_energy += atoms.kinetic_energy();
+
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
-                double kinetic_energy = atoms.kinetic_energy();
+                const int n = static_cast<int>((frameTime / timeStep));
+                avg_temperature /= n;
+                avg_kinetic_energy /= n;
+                avg_potential_energy /= n;
                 write_xyz(traj, atoms);
 
                 energy_stream
                     << std::setw(20) << std::fixed
                     << std::min(timeStep * i, 99999999.0) << std::setw(20)
                     << std::fixed
-                    << std::min(kinetic_energy + potentioal_energy, 99999999.0)
+                    << std::min(avg_kinetic_energy + avg_potential_energy,
+                                99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(kinetic_energy, 99999999.0) << std::setw(20)
-                    << std::fixed << std::min(potentioal_energy, 99999999.0)
+                    << std::min(avg_kinetic_energy, 99999999.0) << std::setw(20)
+                    << std::fixed << std::min(avg_potential_energy, 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(atoms.temperature(), 99999999.0) << std::endl;
+                    << std::min(avg_temperature, 99999999.0) << std::endl;
+
+                avg_temperature = 0;
+                avg_kinetic_energy = 0;
+                avg_potential_energy = 0;
             }
         };
         traj.close();

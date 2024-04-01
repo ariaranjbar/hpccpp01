@@ -1,0 +1,3 @@
+relaxation_time:30.000000 timestep:0.100000 frame_time:2.000000 sim_time:800.000000 thermostat_temperature:300.000000 frame_time:10.000000 output:gold_debug relaxation_time:50.000000 atoms_input:/home/artofaria/desktop/hpccpp01/build/milestones/07/cluster_923_300 
+                time        total_energy      kinetic_energy    potential_energy         temperature
+        0.0000000000       78.6193722303        0.1199364500       78.4994357803        1.0052760919

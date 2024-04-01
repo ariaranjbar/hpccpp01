@@ -154,8 +154,8 @@ int main(int argc, char *argv[]) {
             header += "timestep:" + std::to_string(timeStep);
             header += " ";
         } else if (std::string(argv[i]) == "--sim_time" && i + 1 < argc) {
-            simTime = std::atof(argv[i]);
             i++;
+            simTime = std::atof(argv[i]);
             header += "sim_time:" + std::to_string(simTime);
             header += " ";
         } else if (std::string(argv[i]) == "--frame_time" && i + 1 < argc) {
@@ -186,9 +186,6 @@ int main(int argc, char *argv[]) {
     std::cout << "Hello I am milestone 7 of 9\n";
 
     if (rank == 0) {
-
-        double avg_temperature = 0;
-        double avg_total_energy = 0;
         Atoms atoms;
 
         // Initiate atomic structure
@@ -221,36 +218,53 @@ int main(int argc, char *argv[]) {
                       << "kinetic_energy" << std::setw(20) << "potential_energy"
                       << std::setw(20) << "temperature" << std::endl;
 
+        double avg_temperature = 0;
+        double avg_potential_energy = 0;
+        double avg_kinetic_energy = 0;
+
+        double start_temp = atoms.temperature();
+        double temp_slider = start_temp;
+        double delta_temp = (temp - start_temp) * (timeStep / simTime);
+
+        std::cout << "start  temp: " << start_temp << std::endl;
+        std::cout << "target temp: " << temp << std::endl;
+        std::cout << "delta  temp: " << delta_temp << std::endl;
+
         // Simulation loop
         for (int i = 0; i < static_cast<int>((simTime / timeStep)); i++) {
-
+            temp_slider += delta_temp;
             verlet_step1(atoms, timeStep);
             double potentioal_energy = ducastelle(atoms, neighbor_list, cutoff);
-            verlet_step2(atoms.velocities, atoms.forces, timeStep);
-            berendsen_thermostat(atoms, temp, timeStep, relaxation);
+            verlet_step2(atoms, timeStep);
+            berendsen_thermostat(atoms, temp_slider, timeStep, relaxation);
+
             avg_temperature += atoms.temperature();
-            avg_total_energy += potentioal_energy + atoms.kinetic_energy();
+            avg_potential_energy += potentioal_energy;
+            avg_kinetic_energy += atoms.kinetic_energy();
 
             // Write step
             if (i % static_cast<int>((frameTime / timeStep)) == 0) {
-                double kinetic_energy = atoms.kinetic_energy();
+                const int n = static_cast<int>((frameTime / timeStep));
+                avg_temperature /= n;
+                avg_kinetic_energy /= n;
+                avg_potential_energy /= n;
                 write_xyz(traj, atoms);
 
                 energy_stream
                     << std::setw(20) << std::fixed
                     << std::min(timeStep * i, 99999999.0) << std::setw(20)
                     << std::fixed
-                    << std::min(avg_total_energy / (frameTime / timeStep),
+                    << std::min(avg_kinetic_energy + avg_potential_energy,
                                 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(kinetic_energy, 99999999.0) << std::setw(20)
-                    << std::fixed << std::min(potentioal_energy, 99999999.0)
+                    << std::min(avg_kinetic_energy, 99999999.0) << std::setw(20)
+                    << std::fixed << std::min(avg_potential_energy, 99999999.0)
                     << std::setw(20) << std::fixed
-                    << std::min(avg_temperature / (frameTime / timeStep),
-                                99999999.0)
-                    << std::endl;
-                avg_total_energy = 0;
+                    << std::min(avg_temperature, 99999999.0) << std::endl;
+
                 avg_temperature = 0;
+                avg_kinetic_energy = 0;
+                avg_potential_energy = 0;
             }
         };
         traj.close();

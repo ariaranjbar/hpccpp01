@@ -6,7 +6,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/milestones/07/07", // Path to your built executable
-            "args": ["--output","ms7_aaa001","--atoms_in","/home/artofaria/desktop/hpc_cpp/ms01/build/cluster_923", "--timestep","0.001", "--sim_time","200", "--cutoff", "10.0"], // Command-line arguments if any
+            "args": ["--tau","30","--timestep", "0.1","--frame_time", "2", "--sim_time", "800","--temp", "300", "--frame_time", "10.0", "--output", "gold_debug", "--tau", "50", "--atoms_in", "/home/artofaria/desktop/hpccpp01/build/milestones/07/cluster_923_300"], // Command-line arguments if any
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

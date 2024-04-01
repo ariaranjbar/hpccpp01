@@ -29,8 +29,8 @@
 TEST(LJDirectSummationTest, Forces) {
     constexpr int nb_atoms = 10;
     constexpr double epsilon =
-        0.7; // choose different to 1 to pick up missing factors
-    constexpr double sigma = 0.3;
+        0.01; // choose different to 1 to pick up missing factors
+    constexpr double sigma = 3.4;
     constexpr double delta = 0.0001; // difference used for numerical (finite
                                      // difference) computation of forces
 
